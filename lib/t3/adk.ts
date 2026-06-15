@@ -210,6 +210,9 @@ export async function verifyAgentIdentity(
 export interface PayoutContext {
   exporterRef: string;
   amountCents: number;
+  currency: string;
+  /** LC this payout settles, for the escrow ledger row. */
+  lcId?: string;
   /** Idempotency key so a payout can never double-fire (also used in Step 4). */
   idempotencyKey: string;
   /** Base64url agent invocation signature proving delegated authorization. */
@@ -247,6 +250,8 @@ export interface ResolvePayoutInput {
   buyerPlaceholder: string;
   exporterRef: string;
   amountCents: number;
+  /** ISO currency (default "usd"). */
+  currency?: string;
   /** Optional LC id for event correlation. */
   lcId?: string;
 }
@@ -261,6 +266,7 @@ export async function resolveAndPayoutInTEE(
   input: ResolvePayoutInput,
 ): Promise<AdkResult<PayoutOutcome>> {
   const { buyerPlaceholder, exporterRef, amountCents, lcId } = input;
+  const currency = (input.currency ?? "usd").toLowerCase();
   try {
     // Bind the invocation to this exact request (replay protection).
     const vcId = b64uDecodeStrict(buyerPlaceholder);
@@ -279,12 +285,17 @@ export async function resolveAndPayoutInTEE(
     // deployed in this scaffold; the signature above is the real, verifiable
     // authorization artifact a deployed contract would check.
 
+    // Business idempotency is keyed on the logical payout (LC + exporter +
+    // amount), NOT the per-invocation nonce — so a retry of the same
+    // settlement returns the original transfer instead of firing twice.
     const idempotencyKey = sha256Hex(
-      canonicalJson({ buyerPlaceholder, exporterRef, amountCents, nonce: b64uEncodeBytes(nonce) }),
+      canonicalJson({ lcId: lcId ?? null, buyerPlaceholder, exporterRef, amountCents }),
     );
     const outcome = await payoutExecutor({
       exporterRef,
       amountCents,
+      currency,
+      lcId,
       idempotencyKey,
       agentSigB64u,
     });

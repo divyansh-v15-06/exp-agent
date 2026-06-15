@@ -99,7 +99,14 @@ actual Stripe Connect transfer is injected by Step 4 via `setPayoutExecutor`.
   wrapping real SDK delegation/identity/invocation crypto; typed errors
   (`IdentityError`/`ResolutionError`/`PayoutError`), redaction guard, and a
   `step` event bus. Verified by `tools/step3-smoke.ts`.
-- [ ] Step 4 — Escrow (Stripe Connect, test mode).
+- [x] **Step 4** — Escrow (Stripe Connect, test mode). `lib/escrow`: `lockFunds`
+  (manual-capture held PaymentIntent) + `releaseToExporter` (Connect Transfer),
+  wired into the Step 3 TEE adapter via `setPayoutExecutor`. Double-fire is
+  prevented by a persistent `EscrowTransfer` table with a UNIQUE idempotency key
+  (+ Stripe idempotency keys). Runs against real Stripe test mode when
+  `STRIPE_SECRET_KEY` is set, else a faithful simulator. The exporter
+  destination acct id is resolved server-side and never returned to app context.
+  Verified by `tools/step4-smoke.ts`.
 - [ ] Step 5 — Agent loop + deterministic policy gate.
 - [ ] Step 6 — API + SSE event stream.
 - [ ] Step 7 — Dashboard.

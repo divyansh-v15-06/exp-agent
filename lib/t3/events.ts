@@ -12,6 +12,7 @@ import { assertNoRawAccountData } from "./redact";
 export type StepKind =
   | "identity.verify"
   | "authorization.mint"
+  | "escrow.lock"
   | "tee.resolve"
   | "payout.fire"
   | "audit.write";

@@ -38,6 +38,29 @@ model LetterOfCredit {
   terms         ContractTerms?
   billsOfLading BillOfLading[]
   auditTrail    AuditEntry[]
+  escrows       EscrowTransfer[]
+}
+
+// Persistent idempotency ledger for escrow money movements (Step 4). The
+// UNIQUE idempotencyKey guarantees a lock or payout can never double-fire,
+// even across process restarts or concurrent calls. Stores only opaque refs
+// (Stripe PaymentIntent / Transfer ids) — NEVER raw card / account data.
+model EscrowTransfer {
+  id             String          @id @default(cuid())
+  lcId           String?
+  lc             LetterOfCredit? @relation(fields: [lcId], references: [id], onDelete: SetNull)
+  // "LOCK" (held PaymentIntent) | "RELEASE" (Connect Transfer to exporter).
+  kind           String
+  // Idempotency key; the unique index is the double-fire guard.
+  idempotencyKey String          @unique
+  // Opaque Stripe object id (pi_… / tr_…), or a pi_sim_/tr_sim_ ref in sim mode.
+  ref            String
+  amountCents    Int
+  currency       String
+  status         String
+  // Whether this was a real Stripe test-mode call or the offline simulator.
+  simulated      Boolean         @default(false)
+  createdAt      DateTime        @default(now())
 }
 
 model ContractTerms {
