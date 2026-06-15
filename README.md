@@ -49,6 +49,31 @@ authenticates the agent, and returns its resolved DID:
 }
 ```
 
+## Configuration & fallbacks
+
+The app is designed to **run end-to-end with zero external accounts** — every
+integration that needs credentials degrades to a faithful, clearly-labelled
+simulator so judges can clone and demo immediately.
+
+| Env var | Required? | When set | When **unset** (fallback) |
+| --- | --- | --- | --- |
+| `T3N_AGENT_PRIVATE_KEY` | **Yes** | Agent authenticates to T3 testnet; real `did:t3n` resolves | App can't authenticate. A throwaway testnet key ships in `.env.local`. |
+| `T3N_DEMO_BUYER_PRIVATE_KEY` | **Yes** | Demo buyer signs the delegation credential | Mint throws `AuthorizationError`. A throwaway key ships in `.env.local`. |
+| `DATABASE_URL` | **Yes** | Prisma/SQLite | — (ships in `.env` / `.env.local`) |
+| `STRIPE_SECRET_KEY` | No | Real **Stripe test-mode** PaymentIntents + Transfers (`pi_…`/`tr_…`). `sk_live_` is rejected by design. | **Escrow simulator**: deterministic `pi_sim_…` / `tr_sim_…` refs, no network, no money moved. Rows flagged `simulated: true`. |
+| `STRIPE_DESTINATIONS` | No | JSON map `exporterRef → acct_…` resolved inside the payout boundary | Destination simulated as `acct_sim_<hash>` (never returned to app context either way). |
+
+Two parts of the T3 flow are **stubbed behind the adapter** and marked
+`// TODO: confirm`, because no Trinity contract is deployed in this scaffold:
+submitting the signed invocation to a `tee:trade-finance` delegation contract
+(`client.execute`), and the immutable T3 ledger write (tenant `logging::audit`
+→ `client.getAuditEvents`). The credential mint, identity check, and invocation
+signing are all **real SDK crypto** regardless. See "Honest accounting" below.
+
+Smoke tests for each layer:
+`node --env-file=.env.local --env-file=.env --import tsx tools/step3-smoke.ts`
+(adapter) and `…/step4-smoke.ts` (escrow idempotency).
+
 ## Where the SDK fires
 
 Every fund movement / PII resolution routes through `@terminal3/t3n-sdk`. Remove
