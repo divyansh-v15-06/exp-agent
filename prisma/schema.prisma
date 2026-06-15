@@ -1,0 +1,77 @@
+// Autonomous Trade Finance (Letter of Credit) agent — persistence layer.
+//
+// HARD CONSTRAINT (AGENTS.md §0): NEVER store raw bank / Stripe account /
+// routing / customer values. Buyer + exporter payout details exist ONLY as
+// opaque placeholder references; the real values are resolved inside the
+// Terminal 3 TEE at payout time. Every column below is either domain metadata
+// or an opaque reference — none of it is a real financial credential.
+//
+// SQLite note: Prisma enums are unsupported on SQLite, so `state` and BoL
+// `status` are String columns backed by TS union types in lib/store/types.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model LetterOfCredit {
+  id          String   @id @default(cuid())
+  // Opaque placeholder for the buyer's funds authorization (minted via the T3
+  // SDK in Step 3). "PENDING_AUTH" until the buyer authorizes. NEVER raw data.
+  buyerRef    String
+  // Opaque reference the TEE later resolves to a Stripe Connect destination
+  // account (Step 4). NEVER a raw account/routing number.
+  exporterRef String
+  valueCents  Int
+  currency    String
+  targetPort  String
+  // LcState union (lib/store/types.ts): INITIATED | ESCROWED | VERIFIED |
+  // EXECUTED | SETTLED | DENIED | FAILED.
+  state       String   @default("INITIATED")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  terms         ContractTerms?
+  billsOfLading BillOfLading[]
+  auditTrail    AuditEntry[]
+}
+
+model ContractTerms {
+  id                String         @id @default(cuid())
+  lcId              String         @unique
+  lc                LetterOfCredit @relation(fields: [lcId], references: [id], onDelete: Cascade)
+  requiredPort      String
+  // Required Bill-of-Lading status for release, e.g. "DELIVERED".
+  requiredBolStatus String
+  maxValueCents     Int
+}
+
+model BillOfLading {
+  id        String         @id @default(cuid())
+  lcId      String
+  lc        LetterOfCredit @relation(fields: [lcId], references: [id], onDelete: Cascade)
+  // BolStatus union (lib/store/types.ts): PENDING | IN_TRANSIT | DELIVERED | REJECTED.
+  status    String
+  port      String
+  vesselId  String
+  createdAt DateTime       @default(now())
+}
+
+model AuditEntry {
+  id        String          @id @default(cuid())
+  lcId      String?
+  lc        LetterOfCredit? @relation(fields: [lcId], references: [id], onDelete: SetNull)
+  // DID of the agent that performed the transition (did:t3n:<40-hex>).
+  agentDid  String
+  fromState String
+  toState   String
+  // Human/cryptographic proof string for the transition (redacted payloads only).
+  proof     String
+  // Ledger / payout transaction reference (e.g. T3 receipt hash, Stripe id). Nullable.
+  txRef     String?
+  ts        DateTime        @default(now())
+}

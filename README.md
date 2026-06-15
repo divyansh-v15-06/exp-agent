@@ -71,7 +71,11 @@ lands in `lib/t3/adk.ts` at Step 3.)_
 ## Build progress
 
 - [x] **Step 1** — Scaffold + onboarding. `/health` resolves the agent DID.
-- [ ] Step 2 — Domain model (Prisma + SQLite, seed LCs).
+- [x] **Step 2** — Domain model (Prisma + SQLite). `LetterOfCredit`, `ContractTerms`,
+  `BillOfLading`, `AuditEntry` in `prisma/schema.prisma`; TS state unions in
+  `lib/store/types.ts`. Seeds 3 LCs (valid, port-mismatch, over-value) —
+  `npm run db:push && npm run db:seed`. Buyer/exporter stored as opaque
+  placeholders only; no raw bank/Stripe data persisted.
 - [ ] Step 3 — T3 SDK adapter (core).
 - [ ] Step 4 — Escrow (Stripe Connect, test mode).
 - [ ] Step 5 — Agent loop + deterministic policy gate.
