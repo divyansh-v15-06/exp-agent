@@ -13,9 +13,12 @@ export type StepKind =
   | "identity.verify"
   | "authorization.mint"
   | "escrow.lock"
+  | "llm.parse"
+  | "policy.check"
   | "tee.resolve"
   | "payout.fire"
-  | "audit.write";
+  | "audit.write"
+  | "lc.transition";
 
 export interface StepEvent {
   /** Unique id for this event. */
