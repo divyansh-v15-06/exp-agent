@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  --background: #0b0e14;
+  --background: #06080a;
   --foreground: #e6e9ef;
 }
 
@@ -11,3 +11,72 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Glassmorphism styling */
+.glass-panel {
+  background: rgba(11, 14, 18, 0.5);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.glass-panel-glow {
+  background: rgba(8, 12, 10, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(16, 185, 129, 0.15);
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.02);
+}
+
+.glass-panel-amber {
+  background: rgba(12, 10, 8, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.02);
+}
+
+/* Glowing text & borders */
+.text-glow-green {
+  text-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+}
+
+.text-glow-amber {
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.4);
+}
+
+/* Custom Scrollbar for dark theme code/lists */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* Animate step additions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

@@ -79,6 +79,13 @@ function sha256Hex(input: string): string {
   return createHash("sha256").update(input).digest("hex");
 }
 
+function toColonHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join(":");
+}
+
+
 // ---------------------------------------------------------------------------
 // 1. mintBuyerAuthorization
 // ---------------------------------------------------------------------------
@@ -145,13 +152,24 @@ export async function mintBuyerAuthorization(
       buyerSigB64u: b64uEncodeBytes(sig),
     };
 
+    let credentialJson = {};
+    try {
+      credentialJson = JSON.parse(new TextDecoder().decode(jcs));
+    } catch (e) {}
+
     emitStep({
       kind: "authorization.mint",
       lcId,
       ok: true,
       message: `Buyer authorization minted — placeholder ${maskRef(placeholder)}`,
       proof: placeholder,
-      data: { function: RELEASE_FUNCTION, ttlSecs: CREDENTIAL_TTL_SECS },
+      data: {
+        function: RELEASE_FUNCTION,
+        ttlSecs: CREDENTIAL_TTL_SECS,
+        buyerSigColonHex: toColonHex(sig),
+        credentialJson,
+        placeholder,
+      },
     });
 
     return { ok: true, proof: placeholder, data: result };
@@ -309,7 +327,15 @@ export async function resolveAndPayoutInTEE(
       ok: true,
       message: `Placeholder resolved inside TEE; payout fired to ${outcome.destinationMasked}`,
       proof: agentSigB64u,
-      data: { payoutRef: outcome.payoutRef, destinationMasked: outcome.destinationMasked },
+      data: {
+        payoutRef: outcome.payoutRef,
+        destinationMasked: outcome.destinationMasked,
+        agentSigColonHex: toColonHex(agentSig),
+        preimageColonHex: toColonHex(preimage),
+        nonceColonHex: toColonHex(nonce),
+        requestHashHex: toColonHex(requestHash),
+        buyerPlaceholder,
+      },
     });
     emitStep({
       kind: "payout.fire",
@@ -381,13 +407,26 @@ export async function writeAuditRow(
       },
     });
 
+    const auditPayload = {
+      lcId: entry.lcId ?? null,
+      agentDid: entry.agentDid,
+      fromState: entry.fromState,
+      toState: entry.toState,
+      proof: entry.proof,
+      txRef: entry.txRef ?? receiptHash,
+    };
+
     emitStep({
       kind: "audit.write",
       lcId: entry.lcId,
       ok: true,
       message: `Audit row written ${entry.fromState} -> ${entry.toState} (receipt ${maskRef(receiptHash)})`,
       proof: receiptHash,
-      data: { auditId: row.id },
+      data: {
+        auditId: row.id,
+        receiptHash,
+        auditPayload,
+      },
     });
 
     return { ok: true, proof: receiptHash, data: { id: row.id, receiptHash } };

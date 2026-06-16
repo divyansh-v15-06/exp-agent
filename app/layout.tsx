@@ -1,5 +1,18 @@
 import type { Metadata } from "next";
+import { Outfit, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Autonomous Trade Finance Agent",
@@ -13,8 +26,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen antialiased">{children}</body>
+    <html lang="en" className={`${outfit.variable} ${jetbrainsMono.variable}`}>
+      <body className="min-h-screen antialiased bg-[#080a0b] font-sans text-neutral-100">
+        {children}
+      </body>
     </html>
   );
 }
+
