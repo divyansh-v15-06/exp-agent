@@ -5,26 +5,26 @@
  * satisfied. Its opinion is surfaced to the dashboard but NEVER gates a payout —
  * the deterministic `verifyConditions` (lib/agent/policy.ts) is the sole gate.
  *
- * Uses Claude (claude-opus-4-8) via @anthropic-ai/sdk when ANTHROPIC_API_KEY is
+ * Uses Gemini (gemini-2.5-flash) via @google/genai when GEMINI_API_KEY is
  * set; otherwise falls back to a deterministic heuristic explainer so the flow
  * runs without credentials. Only non-sensitive fields are ever sent to the model.
  */
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI } from "@google/genai";
 import type {
   BillOfLadingLike,
   ContractTermsLike,
   LcLike,
 } from "./policy";
 
-const MODEL = "claude-opus-4-8";
+const MODEL = "gemini-2.5-flash";
 
 export interface BolAssessment {
   /** The model's (or heuristic's) natural-language reasoning. ADVISORY. */
   explanation: string;
   /** The model's non-binding opinion on whether conditions are met. NOT a gate. */
   opinionMet: boolean;
-  /** "claude" when the LLM was used, "heuristic" when the offline fallback ran. */
-  source: "claude" | "heuristic";
+  /** "gemini" when the LLM was used, "heuristic" when the offline fallback ran. */
+  source: "gemini" | "heuristic";
 }
 
 function buildPrompt(
@@ -85,32 +85,22 @@ export async function parseAndExplainBoL(
   bol: BillOfLadingLike,
   lc: LcLike,
 ): Promise<BolAssessment> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return heuristicExplain(terms, bol, lc);
   }
 
   try {
-    const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
+    const ai = new GoogleGenAI({ apiKey });
+    const response = await ai.models.generateContent({
       model: MODEL,
-      max_tokens: 1024,
-      messages: [{ role: "user", content: buildPrompt(terms, bol, lc) }],
+      contents: buildPrompt(terms, bol, lc),
     });
 
-    // Safety classifiers may decline — handle before reading content.
-    if (response.stop_reason === "refusal") {
-      return heuristicExplain(terms, bol, lc);
-    }
-
-    const text = response.content
-      .filter((b): b is Anthropic.TextBlock => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim();
+    const text = response.text || "";
 
     const opinionMet = /ASSESSMENT:\s*MET/i.test(text) && !/NOT MET/i.test(text);
-    return { explanation: text || "(empty model response)", opinionMet, source: "claude" };
+    return { explanation: text || "(empty model response)", opinionMet, source: "gemini" };
   } catch {
     // Network / auth / rate-limit — advisory step must never break the loop.
     return heuristicExplain(terms, bol, lc);

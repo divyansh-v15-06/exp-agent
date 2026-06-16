@@ -32,7 +32,7 @@ async function main() {
       buyerRef: BUYER_AUTH_PENDING,
       exporterRef: "exporter-ref:acme-textiles-001",
       valueCents: 2_500_000,
-      currency: "USD",
+      currency: "AUD",
       targetPort: "Port of Rotterdam (NLRTM)",
       state: "INITIATED",
       terms: {
@@ -51,7 +51,7 @@ async function main() {
       buyerRef: BUYER_AUTH_PENDING,
       exporterRef: "exporter-ref:north-sea-foods-002",
       valueCents: 1_800_000,
-      currency: "USD",
+      currency: "AUD",
       targetPort: "Port of Rotterdam (NLRTM)",
       state: "INITIATED",
       terms: {
@@ -70,7 +70,7 @@ async function main() {
       buyerRef: BUYER_AUTH_PENDING,
       exporterRef: "exporter-ref:pacific-machinery-003",
       valueCents: 9_500_000,
-      currency: "USD",
+      currency: "AUD",
       targetPort: "Port of Singapore (SGSIN)",
       state: "INITIATED",
       terms: {

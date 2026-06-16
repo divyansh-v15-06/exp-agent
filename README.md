@@ -24,7 +24,7 @@ payout time.
 ## Stack
 
 Next.js 14 (App Router) + TypeScript + Tailwind · `@terminal3/t3n-sdk` (v3.5.2) ·
-Stripe Connect (test mode) · Prisma + SQLite · SSE for live updates.
+Stripe Connect (test mode with `source_transaction` direct transfer) · Google Gemini API (`gemini-2.5-flash`) · Prisma + SQLite · SSE for live updates.
 
 ## Run it
 
@@ -62,6 +62,7 @@ simulator so judges can clone and demo immediately.
 | `T3N_AGENT_PRIVATE_KEY` | **Yes** | Agent authenticates to T3 testnet; real `did:t3n` resolves | App can't authenticate. A throwaway testnet key ships in `.env.local`. |
 | `T3N_DEMO_BUYER_PRIVATE_KEY` | **Yes** | Demo buyer signs the delegation credential | Mint throws `AuthorizationError`. A throwaway key ships in `.env.local`. |
 | `DATABASE_URL` | **Yes** | Prisma/SQLite | — (ships in `.env` / `.env.local`) |
+| `GEMINI_API_KEY` | **Yes** | Google Gemini API for parsing and advisory analysis of Bill of Ladings | Fallback heuristic runs instead. |
 | `STRIPE_SECRET_KEY` | No | Real **Stripe test-mode** PaymentIntents + Transfers (`pi_…`/`tr_…`). `sk_live_` is rejected by design. | **Escrow simulator**: deterministic `pi_sim_…` / `tr_sim_…` refs, no network, no money moved. Rows flagged `simulated: true`. |
 | `STRIPE_DESTINATIONS` | No | JSON map `exporterRef → acct_…` resolved inside the payout boundary | Destination simulated as `acct_sim_<hash>` (never returned to app context either way). |
 

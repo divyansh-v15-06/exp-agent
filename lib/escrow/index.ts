@@ -45,7 +45,7 @@ export interface LockResult {
 export async function lockFunds(
   lcId: string,
   amountCents: number,
-  currency = "usd",
+  currency = "aud",
 ): Promise<LockResult> {
   const idempotencyKey = `lock:${lcId}`;
   const cur = currency.toLowerCase();
@@ -125,15 +125,29 @@ export async function releaseToExporter(ctx: PayoutContext): Promise<PayoutOutco
 
   // Resolve placeholder -> Connect destination. acct id stays in this scope.
   const { accountId, simulated: destSimulated } = resolveDestination(ctx.exporterRef);
-  const cur = (ctx.currency ?? "usd").toLowerCase();
+  const cur = (ctx.currency ?? "aud").toLowerCase();
 
   let ref: string;
   const simulated = !isLiveStripe();
   try {
     const stripe = getStripe();
     if (stripe) {
+      let source_transaction: string | undefined;
+      if (ctx.lcId) {
+        const lock = await prisma.escrowTransfer.findFirst({
+          where: { lcId: ctx.lcId, kind: "LOCK" },
+        });
+        if (lock && lock.ref.startsWith("pi_")) {
+          // Capture the hold so we actually collect the funds from the buyer
+          const pi = await stripe.paymentIntents.capture(lock.ref);
+          if (pi.latest_charge) {
+            source_transaction = typeof pi.latest_charge === "string" ? pi.latest_charge : pi.latest_charge.id;
+          }
+        }
+      }
+
       const transfer = await stripe.transfers.create(
-        { amount: ctx.amountCents, currency: cur, destination: accountId },
+        { amount: ctx.amountCents, currency: cur, destination: accountId, source_transaction },
         { idempotencyKey: ctx.idempotencyKey },
       );
       ref = transfer.id;

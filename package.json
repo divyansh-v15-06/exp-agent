@@ -18,7 +18,7 @@
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.104.2",
+    "@google/genai": "^2.8.0",
     "@prisma/client": "5.22.0",
     "@terminal3/t3n-sdk": "3.5.2",
     "ethers": "6.16.0",
