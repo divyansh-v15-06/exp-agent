@@ -93,6 +93,7 @@ export interface DeliveryOutcome {
   state: LcState;
   settled: boolean;
   denied: boolean;
+  failed?: boolean;
   reasons: string[];
   payoutRef?: string;
 }
@@ -172,24 +173,43 @@ export async function onDeliveryWebhook(
     return { state: "VERIFIED", settled: false, denied: true, reasons: policy.reasons };
   }
 
-  // Gate passed: confirm agent identity before any privileged action.
-  await verifyAgentIdentity(agentDid);
+  try {
+    // Gate passed: confirm agent identity before any privileged action.
+    await verifyAgentIdentity(agentDid);
 
-  // Resolve placeholder -> exporter destination inside the TEE and fire payout.
-  const payout = await resolveAndPayoutInTEE({
-    buyerPlaceholder: lc.buyerRef,
-    exporterRef: lc.exporterRef,
-    amountCents: lc.valueCents,
-    currency: lc.currency,
-    lcId,
-  });
-  const payoutRef = payout.data!.payoutRef;
+    // Resolve placeholder -> exporter destination inside the TEE and fire payout.
+    const payout = await resolveAndPayoutInTEE({
+      buyerPlaceholder: lc.buyerRef,
+      exporterRef: lc.exporterRef,
+      amountCents: lc.valueCents,
+      currency: lc.currency,
+      lcId,
+    });
+    const payoutRef = payout.data!.payoutRef;
 
-  // VERIFIED -> EXECUTED -> SETTLED.
-  await transition(lcId, "VERIFIED", "EXECUTED", agentDid, payout.proof!, payoutRef);
-  await transition(lcId, "EXECUTED", "SETTLED", agentDid, payoutRef, payoutRef);
+    // VERIFIED -> EXECUTED -> SETTLED.
+    await transition(lcId, "VERIFIED", "EXECUTED", agentDid, payout.proof!, payoutRef);
+    await transition(lcId, "EXECUTED", "SETTLED", agentDid, payoutRef, payoutRef);
 
-  return { state: "SETTLED", settled: true, denied: false, reasons: [], payoutRef };
+    return { state: "SETTLED", settled: true, denied: false, reasons: [], payoutRef };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "privileged settlement failed";
+    await transition(lcId, "VERIFIED", "FAILED", agentDid, `failed: ${message}`);
+    emitStep({
+      kind: "lc.transition",
+      lcId,
+      ok: false,
+      message: `Settlement FAILED - ${message}`,
+      data: { failed: true },
+    });
+    return {
+      state: "FAILED",
+      settled: false,
+      denied: false,
+      failed: true,
+      reasons: [message],
+    };
+  }
 }
 
 /** Convenience: run the full happy path for an LC (authorize -> deliver -> settle). */

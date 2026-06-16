@@ -31,6 +31,8 @@ Stripe Connect (test mode) · Prisma + SQLite · SSE for live updates.
 ```bash
 npm install
 cp .env.example .env.local   # set T3N_AGENT_PRIVATE_KEY (any 32-byte hex, 0x-prefixed)
+npm run db:push
+npm run db:seed
 npm run dev
 # then:
 curl -s http://localhost:3000/health | jq
@@ -72,7 +74,27 @@ signing are all **real SDK crypto** regardless. See "Honest accounting" below.
 
 Smoke tests for each layer:
 `node --env-file=.env.local --env-file=.env --import tsx tools/step3-smoke.ts`
-(adapter) and `…/step4-smoke.ts` (escrow idempotency).
+(adapter), `.../step4-smoke.ts` (escrow idempotency), and
+`npm run smoke:step5` (full lifecycle).
+
+## App surface
+
+The dashboard at `/` is the judge-facing demo console. It lists seeded Letters
+of Credit, shows the five-state rail, exposes `Authorize escrow` and
+`Simulate delivery` actions, streams live agent events, and shows the audit
+ledger with masked proofs/refs.
+
+API routes:
+
+| Route | Purpose |
+| --- | --- |
+| `GET /health` | Resolve the agent DID through the Terminal 3 SDK. |
+| `GET /api/lc` | List Letters of Credit with terms and current state. |
+| `POST /api/lc` | Create a new Letter of Credit and contract terms. |
+| `POST /api/lc/[id]/authorize` | Mint buyer authorization and lock escrow. |
+| `POST /api/webhook/delivery` | Mock Bill-of-Lading delivery webhook. |
+| `GET /api/ledger` | Return redacted audit rows. |
+| `GET /api/stream` | Server-sent stream of live agent events. |
 
 ## Where the SDK fires
 
@@ -132,7 +154,20 @@ actual Stripe Connect transfer is injected by Step 4 via `setPayoutExecutor`.
   `STRIPE_SECRET_KEY` is set, else a faithful simulator. The exporter
   destination acct id is resolved server-side and never returned to app context.
   Verified by `tools/step4-smoke.ts`.
-- [ ] Step 5 — Agent loop + deterministic policy gate.
-- [ ] Step 6 — API + SSE event stream.
-- [ ] Step 7 — Dashboard.
-- [ ] Step 8 — Edge cases + docs + demo.
+- [x] **Step 5** - Agent loop + deterministic policy gate. `lib/agent/run.ts`
+  drives `INITIATED -> ESCROWED -> VERIFIED -> EXECUTED -> SETTLED` using
+  `mintBuyerAuthorization`, `lockFunds`, advisory BoL parsing, deterministic
+  `verifyConditions`, T3 identity verification, TEE payout, and audit rows.
+  Denied cases halt after `VERIFIED` with an audit proof. Verified by
+  `npm run smoke:step5`, including valid settlement, port mismatch, over-value,
+  duplicate delivery, and identity-safety checks.
+- [x] **Step 6** - API + SSE event stream. `app/api/*` exposes LC create/list,
+  authorization, delivery webhook, ledger, and server-sent `step` events. Every
+  JSON response is guarded by the redaction helper in `lib/api/responses.ts`.
+- [x] **Step 7** - Dashboard. `app/page.tsx` is a functional demo console with
+  LC cards, state rail, authorize/delivery actions, live agent log, secure
+  enclave panel, and audit ledger.
+- [x] **Step 8** - Edge cases + docs + demo. Failure paths are covered for port
+  mismatch, over-value, duplicate delivery, identity mismatch/missing key, and
+  post-policy settlement failures. `DEMO.md`, `NEXTSTEPS.md`, and
+  `project_readme.md` capture the final walkthrough/status.
