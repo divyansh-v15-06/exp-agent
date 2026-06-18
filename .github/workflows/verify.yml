@@ -37,6 +37,6 @@ jobs:
     - name: Run Enclave Integration Smoke Tests
       run: npm run smoke:step5
       env:
-        T3N_AGENT_PRIVATE_KEY: 0x54363dc0fc421addbfcbe438649866ed7bf43f8fdc629019a31aeb71aa68004b
-        T3N_AGENT_DID: did:t3n:c9f6b88a0751923e458e9b07cb74d7e809d985f3
+        T3N_AGENT_PRIVATE_KEY: "0x54363dc0fc421addbfcbe438649866ed7bf43f8fdc629019a31aeb71aa68004b"
+        T3N_AGENT_DID: "did:t3n:c9f6b88a0751923e458e9b07cb74d7e809d985f3"
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
