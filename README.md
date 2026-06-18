@@ -83,11 +83,61 @@ To verify the entire project in under 60 seconds, follow these 4 clicks:
 
 ## 🔬 Testing & Demo Scenarios
 
-The project ships pre-seeded with three validation scenarios so you can test all policy gates instantly:
+The project ships pre-seeded with three validation scenarios so you can test all policy gates instantly. Here is the operational flowchart for each:
 
-1.  **Scenario 1: Happy Path Settlement** (Rotterdam LC, $25,000 value, $50,000 cap) ➔ Webhook matches terms, Stripe captures funds and transfers to the Connect account successfully (**SETTLED**).
-2.  **Scenario 2: Port Mismatch Denial** (Cargo targets Rotterdam, terms require Hamburg) ➔ The deterministic policy gate blocks execution (**FAILED**).
-3.  **Scenario 3: Over Value Cap** (LC value $95,000 exceeds $50,000 cap) ➔ Rejects settlement automatically (**FAILED**).
+### 1. Scenario 1: Happy Path Settlement
+* **Config**: Rotterdam LC, $25,000 value, $50,000 maximum cap.
+* **Outcome**: Bill of lading matches the contract terms, Stripe captures the hold, and executes transfer to connected account (**SETTLED**).
+
+```mermaid
+graph TD
+    A[Start: Rotterdam LC $25k] --> B[Click: Authorize Escrow]
+    B --> C[Stripe Escrow Hold Placed]
+    C --> D[Click: Simulate Port Delivery]
+    D --> E[Gemini BOL Parser: Extract Port & Status]
+    E --> F{Deterministic Policy Engine}
+    F -- "Port Matches & Value <= Max Cap" --> G[TEE Enclave Release Signature]
+    G --> H[Stripe Connect Payout Fired]
+    H --> I[Audit Ledger Receipt Hashed]
+    I --> J[State: SETTLED]
+    style J fill:#10b981,stroke:#047857,stroke-width:2px,color:#fff
+```
+
+### 2. Scenario 2: Port Mismatch Denial
+* **Config**: Rotterdam cargo delivery, but terms require Hamburg port.
+* **Outcome**: The deterministic policy gate flags mismatch and aborts settlement (**FAILED**).
+
+```mermaid
+graph TD
+    A[Start: Rotterdam LC $18k] --> B[Click: Authorize Escrow]
+    B --> C[Stripe Escrow Hold Placed]
+    C --> D[Click: Simulate Port Delivery]
+    D --> E[Gemini BOL Parser: Extract Port & Status]
+    E --> F{Deterministic Policy Engine}
+    F -- "Required: Hamburg / Actual: Rotterdam" --> G[Port Mismatch Violation Flagged]
+    G --> H[Payout Terminated]
+    H --> I[Audit Ledger Failure Receipt Hashed]
+    I --> J[State: FAILED]
+    style J fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+```
+
+### 3. Scenario 3: Over Value Cap
+* **Config**: Singapore cargo delivery, but LC value ($95,000) exceeds maximum cap ($50,000).
+* **Outcome**: Policy gate detects limit overrun and aborts settlement (**FAILED**).
+
+```mermaid
+graph TD
+    A[Start: Singapore LC $95k] --> B[Click: Authorize Escrow]
+    B --> C[Stripe Escrow Hold Placed]
+    C --> D[Click: Simulate Port Delivery]
+    D --> E[Gemini BOL Parser: Extract Port & Status]
+    E --> F{Deterministic Policy Engine}
+    F -- "LC Value $95k > Cap $50k" --> G[Value Cap Violation Flagged]
+    G --> H[Payout Terminated]
+    H --> I[Audit Ledger Failure Receipt Hashed]
+    I --> J[State: FAILED]
+    style J fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
+```
 
 ---
 
