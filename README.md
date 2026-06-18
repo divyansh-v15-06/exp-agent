@@ -12,6 +12,31 @@ By executing the trade rules and payment resolution inside a secure **Trusted Ex
 
 ---
 
+## 💡 Why Terminal 3 Agent Auth SDK?
+
+This project fundamentally depends on Terminal 3's secure capabilities:
+
+1.  **Zero Server Trust for Keys**: Without Terminal 3, Stripe live secrets and merchant connected credentials would have to be stored on standard application databases, forcing users to blindly trust server operators. Under T3, these keys are resolved *only* inside the hardware-isolated enclave memory.
+2.  **Delegated Authority Control**: The buyer delegates payment release authority using standard wallets, producing a cryptographically verified capability. The agent cannot act without this signed delegation.
+3.  **Cryptographic Audit Trail**: Every policy decision, TEE execution, and payout creates an signed receipt bound to the Agent's DID, ensuring total compliance without leaking corporate trade secrets.
+
+### 📊 Project Metrics
+*   **3** Security Zones (Client Zone ➔ TEE Enclave ➔ Settlement)
+*   **5** Core SDK Integration Points
+*   **3** Pre-Seeded Verification Scenarios
+*   **5** Lifecycle State Machine Transitions
+*   **100%** Cryptographically Signed State Receipts
+
+### 🛡️ Agent Auth SDK Coverage
+*   [x] **Agent Identity Verification** (DID contract validation)
+*   [x] **Delegation Credential Issuance** (Browser EIP-191 delegation)
+*   [x] **TEE Isolated Resolution** (Secure enclave execution)
+*   [x] **Secure Payout Resolution** (Stripe Connect shielding)
+*   [x] **Replay Protection** (Secure nonces and preimage signing)
+*   [x] **Immutable Cryptographic Audit Logging** (Agent DID signed receipts)
+
+---
+
 ## 🗺️ Architecture Overview
 
 Our architecture splits execution into three strict security zones to ensure no sensitive hot keys or bank details escape the isolated TEE boundary:
@@ -42,6 +67,17 @@ For hackathon judging, here is exactly where the **Terminal 3 Agent Auth SDK** i
 *   **Zero-Configuration Stripe Connect**: If a new exporter is registered (e.g. `exporter-ref:royal-dutch-yarn-999`) and has no pre-mapped Stripe Connect ID, the agent automatically provisions a test-mode Custom Connected Account on-the-fly and caches it in `stripe_destinations_cache.json`.
 *   **Interactive Enclave Panel**: Highlights milestones in emerald green or amber orange, with an interactive security topology diagram visualizing active boundaries.
 *   **Custom Contracts & Policy Rules**: Toggle the creation modal to set customized required ports or max limit caps, making it easy to test policy gate violations.
+
+---
+
+## 🏁 The 4-Click Judge Journey
+
+To verify the entire project in under 60 seconds, follow these 4 clicks:
+
+1.  **Click 1**: Select the Rotterdam Letter of Credit (`exporter-ref:acme-textiles-001`) from the console list.
+2.  **Click 2**: Click **Authorize Escrow** (Simulates buyer wallet signature delegation & places Stripe hold).
+3.  **Click 3**: Click **Simulate Port Delivery** (Fires BoL webhook, runs LLM document parsing, deterministic policy checks, and enclave payouts).
+4.  **Click 4**: Click **Inspect Proof** on any completed milestone (like `llm.parse` or `policy.check`) to view the visual signature card and policy outcome details.
 
 ---
 
