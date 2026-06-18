@@ -140,6 +140,13 @@ Verify all gates, duplicate webhook protection, and signature checks:
 npm run smoke:step5
 ```
 
+### 6. Verify Cryptographic Ledger Integrity
+Run the auditing tool to verify transition paths and hash chains:
+```bash
+npm run audit:verify
+```
+*This CLI tool validates state transition legality and computes a Git-style rolling SHA-256 chain hash over the ledger history, proving no database tampering has occurred.*
+
 ---
 
 ## 📹 Video Presentation Kit

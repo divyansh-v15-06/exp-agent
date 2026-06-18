@@ -12,6 +12,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "smoke:step5": "node --env-file-if-exists=.env.local --env-file-if-exists=.env --import tsx tools/step5-smoke.ts",
+    "audit:verify": "node --env-file-if-exists=.env.local --env-file-if-exists=.env --import tsx tools/verify-ledger.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
