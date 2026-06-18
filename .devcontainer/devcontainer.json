@@ -1,0 +1,22 @@
+{
+  "name": "Node.js & Next.js Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "features": {},
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Web Server",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "npm install && npx prisma generate && npx prisma db push && npx prisma db seed",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "prisma.prisma"
+      ]
+    }
+  }
+}
