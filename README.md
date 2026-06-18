@@ -83,11 +83,25 @@ To verify the entire project in under 60 seconds, follow these 4 clicks:
 
 ## 🔬 Testing & Demo Scenarios
 
-The project ships pre-seeded with three validation scenarios so you can test all policy gates instantly:
+The project ships pre-seeded with three validation scenarios so you can test all policy gates instantly. Here is the operational flowchart for each:
 
-1.  **Scenario 1: Happy Path Settlement** (Rotterdam LC, $25,000 value, $50,000 cap) ➔ Webhook matches terms, Stripe captures funds and transfers to the Connect account successfully (**SETTLED**).
-2.  **Scenario 2: Port Mismatch Denial** (Cargo targets Rotterdam, terms require Hamburg) ➔ The deterministic policy gate blocks execution (**FAILED**).
-3.  **Scenario 3: Over Value Cap** (LC value $95,000 exceeds $50,000 cap) ➔ Rejects settlement automatically (**FAILED**).
+### 1. Scenario 1: Happy Path Settlement
+* **Config**: Rotterdam LC, $25,000 value, $50,000 maximum cap.
+* **Outcome**: Bill of lading matches the contract terms, Stripe captures the hold, and executes transfer to connected account (**SETTLED**).
+
+![Happy Path Settlement Flowchart](./happy_path_flowchart.png)
+
+### 2. Scenario 2: Port Mismatch Denial
+* **Config**: Rotterdam cargo delivery, but terms require Hamburg port.
+* **Outcome**: The deterministic policy gate flags mismatch and aborts settlement (**FAILED**).
+
+![Port Mismatch Flowchart](./port_mismatch_flowchart.png)
+
+### 3. Scenario 3: Over Value Cap
+* **Config**: Singapore cargo delivery, but LC value ($95,000) exceeds maximum cap ($50,000).
+* **Outcome**: Policy gate detects limit overrun and aborts settlement (**FAILED**).
+
+![Over Value Flowchart](./over_value_flowchart.png)
 
 ---
 
@@ -125,6 +139,13 @@ Verify all gates, duplicate webhook protection, and signature checks:
 ```bash
 npm run smoke:step5
 ```
+
+### 6. Verify Cryptographic Ledger Integrity
+Run the auditing tool to verify transition paths and hash chains:
+```bash
+npm run audit:verify
+```
+*This CLI tool validates state transition legality and computes a Git-style rolling SHA-256 chain hash over the ledger history, proving no database tampering has occurred.*
 
 ---
 
