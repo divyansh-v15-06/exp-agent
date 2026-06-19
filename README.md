@@ -118,10 +118,11 @@ Copy the example environment file:
 ```bash
 cp .env.example .env.local
 ```
+Configure your `DATABASE_URL` in `.env.local` to point to a PostgreSQL database (e.g., Neon or Supabase).
 *Your registered Agent DID (`did:t3n:c9f6b88a...`) and private keys are pre-configured for instant sandbox testing.*
 
 ### 3. Initialize Database
-Push schema and seed initial Letters of Credit:
+Push the schema and seed the initial Letters of Credit to your PostgreSQL database:
 ```bash
 npm run db:push
 ```
@@ -152,7 +153,7 @@ npm run audit:verify
 
 ## 🐳 Run with Docker
 
-You can package and run the application in a stateful Docker container with local SQLite database persistence.
+You can package and run the application in a Docker container, passing your PostgreSQL configuration.
 
 ### 1. Build the Image
 ```bash
@@ -160,18 +161,10 @@ docker build -t trade-finance-agent .
 ```
 
 ### 2. Run the Container
-Create a local `data` directory to mount inside the container. This preserves your SQLite database files across container restarts.
+Make sure your `.env.local` file contains the correct `DATABASE_URL` pointing to your Neon/PostgreSQL database.
 
-**On Windows (PowerShell or Cmd):**
 ```bash
-mkdir data
-docker run -d -p 3000:3000 -v "%cd%/data:/app/data" --env-file .env.local trade-finance-agent
-```
-
-**On macOS / Linux / Bash:**
-```bash
-mkdir -p data
-docker run -d -p 3000:3000 -v "$(pwd)/data:/app/data" --env-file .env.local trade-finance-agent
+docker run -d -p 3000:3000 --env-file .env.local trade-finance-agent
 ```
 
 ---

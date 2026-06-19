@@ -28,10 +28,6 @@ COPY images ./images/
 RUN npx prisma generate
 RUN npm run build
 
-# Create a directory to store the persistent SQLite database
-RUN mkdir -p /app/data
-ENV DATABASE_URL="file:/app/data/dev.db"
-
 # Expose Next.js port
 EXPOSE 3000
 ENV PORT 3000
