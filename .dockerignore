@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.env
+.env.local
+.env*.local
+*.db
+*.db-journal
+stripe_destinations_cache.json
+Dockerfile
+.dockerignore
+README.md
+walkthrough.md
