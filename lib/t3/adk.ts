@@ -333,7 +333,7 @@ export async function resolveAndPayoutInTEE(
         agentSigColonHex: toColonHex(agentSig),
         preimageColonHex: toColonHex(preimage),
         nonceColonHex: toColonHex(nonce),
-        requestHashHex: toColonHex(requestHash),
+        requestHashHex: toColonHex(new Uint8Array(requestHash)),
         buyerPlaceholder,
       },
     });
