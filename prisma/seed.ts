@@ -23,6 +23,7 @@ async function main() {
   // Idempotent reseed: clear children first (FK order), then parents.
   await prisma.auditEntry.deleteMany();
   await prisma.billOfLading.deleteMany();
+  await prisma.escrowTransfer.deleteMany();
   await prisma.contractTerms.deleteMany();
   await prisma.letterOfCredit.deleteMany();
 

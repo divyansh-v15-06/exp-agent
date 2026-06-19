@@ -42,7 +42,7 @@ This project fundamentally depends on Terminal 3's secure capabilities:
 
 Our architecture splits execution into three strict security zones to ensure no sensitive hot keys or bank details escape the isolated TEE boundary:
 
-![Trade Finance Secure Architecture Flowchart](./trade_finance_architecture_flowchart.png)
+![Trade Finance Secure Architecture Flowchart](./images/trade_finance_architecture_flowchart.png)
 
 1.  **Client Zone (Browser)**: The buyer uses their wallet to sign a contract delegation credential (EIP-191). This creates a secure, signed capability represented by an opaque placeholder. The agent never sees the buyer's private key.
 2.  **TEE Enclave (Private Execution)**: When a Bill of Lading delivery webhook is received, the agent operates in hardware-isolated memory. It uses Google Gemini to parse the unstructured logistics data, feeding it into a deterministic TypeScript policy engine. The LLM acts purely as an advisor; the code remains the sole gatekeeper for funds.
@@ -90,19 +90,19 @@ The project ships pre-seeded with three validation scenarios so you can test all
 * **Config**: Rotterdam LC, $25,000 value, $50,000 maximum cap.
 * **Outcome**: Bill of lading matches the contract terms, Stripe captures the hold, and executes transfer to connected account (**SETTLED**).
 
-![Happy Path Settlement Flowchart](./happy_path_flowchart.png)
+![Happy Path Settlement Flowchart](./images/happy_path_flowchart.png)
 
 ### 2. Scenario 2: Port Mismatch Denial
 * **Config**: Rotterdam cargo delivery, but terms require Hamburg port.
 * **Outcome**: The deterministic policy gate flags mismatch and aborts settlement (**FAILED**).
 
-![Port Mismatch Flowchart](./port_mismatch_flowchart.png)
+![Port Mismatch Flowchart](./images/port_mismatch_flowchart.png)
 
 ### 3. Scenario 3: Over Value Cap
 * **Config**: Singapore cargo delivery, but LC value ($95,000) exceeds maximum cap ($50,000).
 * **Outcome**: Policy gate detects limit overrun and aborts settlement (**FAILED**).
 
-![Over Value Flowchart](./over_value_flowchart.png)
+![Over Value Flowchart](./images/over_value_flowchart.png)
 
 ---
 
@@ -118,10 +118,11 @@ Copy the example environment file:
 ```bash
 cp .env.example .env.local
 ```
+Configure your `DATABASE_URL` in `.env.local` to point to a PostgreSQL database (e.g., Neon or Supabase).
 *Your registered Agent DID (`did:t3n:c9f6b88a...`) and private keys are pre-configured for instant sandbox testing.*
 
 ### 3. Initialize Database
-Push schema and seed initial Letters of Credit:
+Push the schema and seed the initial Letters of Credit to your PostgreSQL database:
 ```bash
 npm run db:push
 ```
@@ -150,6 +151,24 @@ npm run audit:verify
 
 ---
 
-## 📹 Video Presentation Kit
-For video recording, slides, and case study data, check out:
-*   [videoscript.md](./videoscript.md) — Spoken word-for-word script, visual cues, and industry case studies.
+## 🐳 Run with Docker
+
+You can package and run the application in a Docker container, passing your PostgreSQL configuration.
+
+### 1. Build the Image
+```bash
+docker build -t trade-finance-agent .
+```
+
+### 2. Run the Container
+Make sure your `.env.local` file contains the correct `DATABASE_URL` pointing to your Neon/PostgreSQL database.
+
+```bash
+docker run -d -p 3000:3000 --env-file .env.local trade-finance-agent
+```
+
+---
+
+## 📹 Video Presentation & Walkthrough Kit
+For video recording scripts, slides structure, and judge demo instructions, check out:
+*   [walkthrough.md](./walkthrough.md) — Step-by-step judge script, live Stripe dashboard verification checklist, and system walkthrough.

@@ -10,6 +10,24 @@ jobs:
   verify:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: neondb
+          POSTGRES_USER: neondb_owner
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: "postgresql://neondb_owner:password@localhost:5432/neondb?sslmode=disable"
+
     steps:
     - uses: actions/checkout@v4
 
