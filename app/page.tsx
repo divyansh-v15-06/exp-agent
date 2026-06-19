@@ -510,6 +510,11 @@ export default function Home() {
   const [formRequiredPort, setFormRequiredPort] = useState("Rotterdam");
   const [formMaxLimit, setFormMaxLimit] = useState("25000");
 
+  // Reset DB State
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [confirmResetText, setConfirmResetText] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
+
   const handlePortChange = (val: string) => {
     setFormPort(val);
     if (!customizePolicy) {
@@ -563,6 +568,28 @@ export default function Home() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setIsSubmitting(false);
+    }
+  }
+
+  async function handleResetDb() {
+    setIsResetting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/reset", {
+        method: "POST",
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to reset database");
+      }
+      setIsResetOpen(false);
+      setConfirmResetText("");
+      setSelectedId(null);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setIsResetting(false);
     }
   }
 
@@ -666,7 +693,16 @@ export default function Home() {
         <header className="lg:col-span-2">
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-900 pb-5">
             <div>
-              <p className="font-mono text-xs uppercase tracking-widest text-amber-400">Autonomous trade finance node</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-amber-400 flex items-center gap-2">
+                <span>Autonomous trade finance node</span>
+                <button
+                  onClick={() => setIsResetOpen(true)}
+                  className="opacity-40 hover:opacity-100 transition-opacity duration-200 text-red-400 hover:text-red-300 font-mono text-[9px] border border-red-500/20 hover:border-red-500/40 bg-red-950/20 px-1.5 py-0.5 rounded cursor-pointer select-none"
+                  title="Reset database to demo seed data"
+                >
+                  [DEMO RESET]
+                </button>
+              </p>
               <h1 className="mt-2 text-2xl font-bold tracking-tight text-neutral-50 sm:text-3xl">
                 Letter of Credit Agent Console
               </h1>
@@ -1090,6 +1126,82 @@ export default function Home() {
                 </button>
               </div>
             </form>
+          </div>
+        </>
+      )}
+      {isResetOpen && (
+        <>
+          <div
+            onClick={() => {
+              if (!isResetting) {
+                setIsResetOpen(false);
+                setConfirmResetText("");
+              }
+            }}
+            className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[60] transition-opacity duration-300 animate-fade-in"
+          />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[#0a0d12] border border-red-950/60 shadow-2xl p-6 rounded-sm z-[70] transition-all duration-300 backdrop-blur-md animate-fade-in font-sans">
+            <div className="flex items-center gap-3 border-b border-red-950/30 pb-3 mb-5">
+              <span className="text-red-500 text-2xl">⚠️</span>
+              <div>
+                <p className="font-mono text-[9px] uppercase tracking-widest text-red-400">Dangerous Administrative Action</p>
+                <h3 className="text-lg font-bold text-neutral-50 font-mono">Reset Demo Database</h3>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs font-mono leading-relaxed text-neutral-300">
+              <div className="border border-red-500/20 bg-red-950/10 p-3.5 rounded-sm text-red-400">
+                <span className="font-bold uppercase tracking-wider block mb-1 text-[9.5px]">Warning & Disclaimer:</span>
+                This action is intended <span className="underline font-bold text-red-300">strictly for the demo version</span> of the application. It will permanently delete:
+                <ul className="list-disc list-inside mt-1.5 space-y-1 ml-1 text-neutral-300 text-[10.5px]">
+                  <li>All Letters of Credit contracts</li>
+                  <li>All simulated Bills of Lading</li>
+                  <li>All escrow hold & payout records</li>
+                  <li>All cryptographic audit ledger logs</li>
+                </ul>
+              </div>
+
+              <p className="text-neutral-400 text-[10.5px]">
+                Once executed, the database will be seeded back to its original 3 demo contracts. There is no undo.
+              </p>
+
+              <div className="space-y-2 mt-4 font-mono">
+                <label className="text-neutral-400 uppercase tracking-wider text-[9px] block">
+                  To confirm, type <code className="text-red-400 font-bold bg-neutral-900/60 px-1 py-0.5 rounded border border-neutral-800">RESET</code> below:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={confirmResetText}
+                  onChange={(e) => setConfirmResetText(e.target.value)}
+                  placeholder="RESET"
+                  disabled={isResetting}
+                  className="w-full bg-black/60 border border-neutral-900 rounded-sm px-3 py-2 text-neutral-200 placeholder-neutral-800 focus:outline-none focus:border-red-500/50 transition font-mono uppercase tracking-wider text-center"
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <button
+                  type="button"
+                  disabled={isResetting}
+                  onClick={() => {
+                    setIsResetOpen(false);
+                    setConfirmResetText("");
+                  }}
+                  className="flex-1 bg-neutral-900 hover:bg-neutral-850 border border-neutral-850 hover:border-neutral-700 text-neutral-400 font-mono py-2 rounded-sm transition tracking-wider uppercase text-[10px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={confirmResetText !== "RESET" || isResetting}
+                  onClick={handleResetDb}
+                  className="flex-1 bg-red-950/20 hover:bg-red-900/20 border border-red-500/30 hover:border-red-500/60 disabled:border-neutral-900 disabled:bg-neutral-950/40 text-red-400 disabled:text-neutral-600 font-mono font-bold py-2 rounded-sm transition tracking-wider uppercase text-[10px] disabled:cursor-not-allowed"
+                >
+                  {isResetting ? "Resetting..." : "Execute Reset"}
+                </button>
+              </div>
+            </div>
           </div>
         </>
       )}
