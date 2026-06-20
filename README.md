@@ -179,8 +179,3 @@ Make sure your `.env.local` file contains the correct `DATABASE_URL` pointing to
 docker run -d -p 3000:3000 --env-file .env.local trade-finance-agent
 ```
 
----
-
-## 📹 Video Presentation & Walkthrough Kit
-For video recording scripts, slides structure, and judge demo instructions, check out:
-*   [walkthrough.md](./walkthrough.md) — Step-by-step judge script, live Stripe dashboard verification checklist, and system walkthrough.
